@@ -16,8 +16,10 @@ from past.builtins import basestring
 
 if sys.version_info[0] < 3:
     from urlparse import urlparse
+    PY2 = True
 else:
     from urllib.parse import urlparse
+    PY2 = False
 
 LOG = logging.getLogger(__name__)
 
@@ -543,7 +545,7 @@ def is_valid_bucket_name(name):
     # Bucket names must start with a lowercase letter or number.
     if not (name[0].islower() or name[0].isdigit()):
         return False
-    # Bucket names must be a series of one or more labels. Adjacent labels are separated by a single period (.). 
+    # Bucket names must be a series of one or more labels. Adjacent labels are separated by a single period (.).
     for label in name.split("."):
         # Each label must start and end with a lowercase letter or a number.
         if len(label) < 1:
@@ -562,3 +564,11 @@ def is_valid_bucket_name(name):
         return False
 
     return True
+
+
+# https://github.com/Miserlou/Zappa/issues/1330
+# Encode the json.dumps only if Python 2
+def json_encode(message):
+    if PY2:
+        return json.dumps(message).encode('utf-8')
+    return json.dumps(message)

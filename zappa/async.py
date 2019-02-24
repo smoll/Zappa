@@ -95,12 +95,7 @@ import os
 import uuid
 import time
 
-from .utilities import get_topic_name
-
-# https://github.com/Miserlou/Zappa/issues/1330
-# Need to check whether we need the encoding or not for the SNS payload
-import sys
-PY2 = (sys.version_info[0] == 2)
+from .utilities import get_topic_name, json_encode
 
 try:
     from zappa_settings import ASYNC_RESPONSE_TABLE
@@ -180,12 +175,7 @@ class LambdaAsyncResponse(object):
         Given a message, directly invoke the lamdba function for this task.
         """
         message['command'] = 'zappa.async.route_lambda_task'
-        # https://github.com/Miserlou/Zappa/issues/1330
-        # encode the json.dumps only if Python 2
-        if PY2:
-            payload = json.dumps(message).encode('utf-8')
-        else:
-            payload = json.dumps(message)
+        payload = json_encode(message)
         if len(payload) > 128000: # pragma: no cover
             raise AsyncException("Payload too large for async Lambda call")
         self.response = self.client.invoke(
@@ -251,7 +241,7 @@ class SnsAsyncResponse(LambdaAsyncResponse):
         Given a message, publish to this topic.
         """
         message['command'] = 'zappa.async.route_sns_task'
-        payload = json.dumps(message).encode('utf-8')
+        payload = json_encode(message)
         if len(payload) > 256000: # pragma: no cover
             raise AsyncException("Payload too large for SNS")
         self.response = self.client.publish(
